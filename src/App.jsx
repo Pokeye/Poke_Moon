@@ -119,6 +119,16 @@ function InteractiveTerminal() {
   </section>;
 }
 
+function AmbientStatus() {
+  const [statusIndex, setStatusIndex] = useState(0);
+  const statuses = ["SYSTEM READY", "PROJECT INDEX STABLE", "AWAITING INPUT", "CHANNEL OPEN"];
+  useEffect(() => {
+    const timer = window.setInterval(() => setStatusIndex((current) => (current + 1) % statuses.length), 4200);
+    return () => window.clearInterval(timer);
+  }, [statuses.length]);
+  return <span className="ambient-status" aria-label="Decorative system status"><i aria-hidden="true" /> {statuses[statusIndex]}</span>;
+}
+
 function AboutComms({ open, onClose }) {
   useEffect(() => {
     if (!open) return undefined;
@@ -199,7 +209,7 @@ export function App() {
     {booting && <BootSequence onComplete={() => setBooting(false)} />}
     <div className="scroll-progress" style={{ width: `${scrollProgress}%` }} aria-hidden="true" />
     <Header theme={theme} onToggle={toggleTheme} />
-    <div className="hud-status" aria-label={`Active section: ${activeSection}`}>LINK / {activeSection.toUpperCase()} <span>●</span></div>
+    <div className="hud-status" aria-label={`Active section: ${activeSection}`}><AmbientStatus /> <b>LINK / {activeSection.toUpperCase()}</b> <span>●</span></div>
     <button className="comms-trigger" type="button" onClick={() => setCommsOpen(true)} aria-label="Open About profile">COMMS / ABOUT</button>
     <AboutComms open={commsOpen} onClose={() => setCommsOpen(false)} />
     <main>
