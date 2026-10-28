@@ -185,20 +185,26 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [booting]);
   useEffect(() => {
+    let frameId = 0;
     const updateScrollState = () => {
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(maxScroll > 0 ? window.scrollY / maxScroll * 100 : 0);
+      const progress = maxScroll > 0 ? window.scrollY / maxScroll * 100 : 0;
+      setScrollProgress((current) => Math.abs(current - progress) > 0.1 ? progress : current);
       const sections = ["home", "projects", "approach", "contact", "terminal"];
       const current = sections.reduce((found, id) => {
         const element = document.getElementById(id);
         return element && element.getBoundingClientRect().top <= window.innerHeight * .35 ? id : found;
       }, "home");
-      setActiveSection(current);
+      setActiveSection((previous) => previous === current ? previous : current);
+      frameId = 0;
     };
-    updateScrollState();
-    window.addEventListener("scroll", updateScrollState, { passive: true });
-    window.addEventListener("resize", updateScrollState);
-    return () => { window.removeEventListener("scroll", updateScrollState); window.removeEventListener("resize", updateScrollState); };
+    const scheduleScrollState = () => {
+      if (frameId === 0) frameId = window.requestAnimationFrame(updateScrollState);
+    };
+    scheduleScrollState();
+    window.addEventListener("scroll", scheduleScrollState, { passive: true });
+    window.addEventListener("resize", scheduleScrollState);
+    return () => { window.removeEventListener("scroll", scheduleScrollState); window.removeEventListener("resize", scheduleScrollState); if (frameId) window.cancelAnimationFrame(frameId); };
   }, []);
   const toggleTheme = () => {
     setThemeTransitioning(true);
@@ -243,7 +249,7 @@ export function App() {
             <figure className={`project-visual ${project.mediaType ? "project-visual--media" : "project-visual--placeholder"}`}>
               {project.mediaType === "image" && <img src={project.media} alt={project.mediaAlt} />}
               {project.mediaType === "video" && <video src={project.media} autoPlay loop playsInline controls aria-label="Looping hand sign recognition demo" />}
-              {!project.mediaType && <div className="project-visual__grid"><span>{project.id}</span><strong>COMING SOON</strong></div>}
+              {!project.mediaType && <div className="project-visual__grid project-visual__grid--rogue"><span>{project.id} / BLACKWALL SIGNAL</span><div className="rogue-skull" aria-label="Original rogue AI skull placeholder" role="img"><i className="rogue-skull__eye rogue-skull__eye--left" /><i className="rogue-skull__eye rogue-skull__eye--right" /><i className="rogue-skull__jaw" /></div><strong>COMING SOON</strong></div>}
               <figcaption>{project.mediaLabel}</figcaption>
             </figure>
           </article>)}
